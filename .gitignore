@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.env
+.vscode/
+.idea/
+*.log
+
+# B역할(백엔드) 이외의 폴더 제외
+ai/
+frontend/
+음성 샘플/
+vibe-coding/

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion AI - Audio Analysis</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+        .container { border: 1px solid #ddd; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .upload-section { margin-bottom: 20px; }
+        #result { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 4px; display: none; }
+        .emotion-item { margin: 5px 0; }
+        .top-emotion { font-weight: bold; color: #007bff; font-size: 1.2em; }
+        button { cursor: pointer; background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; }
+        button:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>음성 감정 분석 (1주차)</h1>
+        <div class="upload-section">
+            <input type="file" id="audioFile" accept="audio/*">
+            <button onclick="uploadAudio()" id="uploadBtn">분석하기</button>
+        </div>
+        
+        <div id="loading" style="display: none;">분석 중...</div>
+
+        <div id="result">
+            <h3>분석 결과</h3>
+            <p>파일명: <span id="resFilename"></span></p>
+            <p>가장 강한 감정: <span id="resTopEmotion" class="top-emotion"></span></p>
+            <div id="emotionList"></div>
+        </div>
+    </div>
+
+    <script>
+        async function uploadAudio() {
+            const fileInput = document.getElementById('audioFile');
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            if (!fileInput.files.length) {
+                alert('파일을 선택해주세요!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            // UI 상태 업데이트
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            uploadBtn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:8000/analyze-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('서버 통신 에러');
+
+                const data = await response.json();
+                displayResult(data);
+            } catch (error) {
+                alert('오류 발생: ' + error.message);
+            } finally {
+                loadingDiv.style.display = 'none';
+                uploadBtn.disabled = false;
+            }
+        }
+
+        function displayResult(data) {
+            const resultDiv = document.getElementById('result');
+            document.getElementById('resFilename').innerText = data.filename;
+            document.getElementById('resTopEmotion').innerText = data.topEmotion;
+
+            const listDiv = document.getElementById('emotionList');
+            listDiv.innerHTML = '';
+            data.result.forEach(item => {
+                const p = document.createElement('p');
+                p.className = 'emotion-item';
+                p.innerText = `${item.label}: ${(item.score * 100).toFixed(1)}%`;
+                listDiv.appendChild(p);
+            });
+
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
